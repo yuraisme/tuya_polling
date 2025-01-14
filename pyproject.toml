@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "tuya-connector-python"
+version = "0.1.0"
+description = ""
+authors = ["yuraisme <yuraisme@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+requests = "^2.32.3"
+tinytuya = "^1.16.0"
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

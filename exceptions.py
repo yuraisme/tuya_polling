@@ -1,0 +1,2 @@
+class APITuyaException(Exception):
+    pass
