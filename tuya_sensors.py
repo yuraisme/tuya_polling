@@ -4,16 +4,22 @@ from typing import NamedTuple
 import tinytuya
 from dotenv import load_dotenv
 
-from exceptions import APITuyaException
+from exceptions import APITuyaException, EnvLoadException
 
-# tinytuya.scan()
-# Connect to Device
-Celcius = float
-Percent = float
-TEMP_ID = ""
-GW_ID = ""
-LOCAL_KEY = ""
-NODE_ID = ""
+try:
+    # Загружаем .env
+    load_dotenv()
+
+    # tinytuya.scan()
+    # Connect to Device
+    Celcius = float
+    Percent = float
+    TEMP_ID = os.getenv("TEMP_ID")
+    GW_ID = os.getenv("GW_ID")
+    LOCAL_KEY = os.getenv("LOCAL_KEY")
+    NODE_ID = os.getenv("NODE_ID")
+except Exception:
+    raise EnvLoadException
 
 
 class TempData(NamedTuple):
@@ -28,7 +34,7 @@ def connect_to_device() -> dict[str, dict] | None:
         tuiya_gateway = tinytuya.Device(
             dev_id=GW_ID,
             address=None,
-            local_key=LOCAL_KEY,
+            local_key=LOCAL_KEY or "",
             persist=True,
             version=3.3,
         )
@@ -78,7 +84,7 @@ def get_tuya_temp(sensor_info: dict[str, dict] | None, debug: bool = False):
 if __name__ == "__main__":
     response_sensor = connect_to_device()
     if response_sensor:
-        print(get_tuya_temp(response_sensor, True).temperature)
+        print(get_tuya_temp(response_sensor).temperature)
         print(get_tuya_temp(response_sensor).humidity)
         print(get_tuya_temp(response_sensor).battery)
 
