@@ -9,20 +9,24 @@ from exceptions import APITuyaException, EnvLoadException
 try:
     # Загружаем .env
     load_dotenv()
-
     # tinytuya.scan()
     # Connect to Device
-    Celcius = float
-    Percent = float
     TEMP_ID = os.getenv("TEMP_ID")
     GW_ID = os.getenv("GW_ID")
     LOCAL_KEY = os.getenv("LOCAL_KEY")
     NODE_ID = os.getenv("NODE_ID")
 except Exception:
     raise EnvLoadException
+    exit(0)
 
+if NODE_ID is None:
+    raise EnvLoadException
+    exit(0)
 
-class TempData(NamedTuple):
+Celcius = float
+Percent = float
+ 
+class SensorData(NamedTuple):
     temperature: Celcius
     humidity: Percent
     battery: int
@@ -50,7 +54,6 @@ def connect_to_device() -> dict[str, dict] | None:
             parent=tuiya_gateway,
         )
 
-        # print(tuya_temp.status())
     except Exception:
         raise APITuyaException
 
@@ -72,7 +75,7 @@ def get_tuya_temp(sensor_info: dict[str, dict] | None, debug: bool = False):
         raise APITuyaException
 
     if parsed_data and isinstance(parsed_data, dict):
-        return TempData(
+        return SensorData(
             temperature=parsed_data.get("1", -100) / 10,
             humidity=parsed_data.get("2", -100) / 10,
             battery=parsed_data.get("4", -100),
@@ -89,4 +92,4 @@ if __name__ == "__main__":
         print(get_tuya_temp(response_sensor).battery)
 
     else:
-        print("Some fail coming")
+        print("Some fail came")
