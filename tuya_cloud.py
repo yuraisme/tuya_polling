@@ -5,7 +5,7 @@ import pydantic
 import pydantic.error_wrappers
 import tinytuya
 from dotenv import load_dotenv
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, computed_field
 
 from exceptions import APITuyaException
 
@@ -19,31 +19,34 @@ Celcius = float
 Percent = float
 
 
-class Answer_dict(BaseModel):
-    code: str = "code"
-    value: int
-
-
-class ResponseModel(BaseModel):
-    data: dict[str, int]
-
-    @model_validator(mode="before")
-    def transform_result_to_dict(cls, values):
-        # Преобразование списка result в словарь
-        result_list = values.get("result", [])
-        if result_list != []:
-            values["data"] = {
-                item["code"]: item["value"] for item in result_list
-            }
-            return values
-        else:
-            raise APITuyaException
-
-
 class SensorData(NamedTuple):
     temperature: Celcius
     humidity: Percent
     battery: int
+
+
+class list_dict(BaseModel):
+    code: str
+    value: int
+
+
+class MainModel(BaseModel):
+    result: list[list_dict]
+
+    @computed_field
+    @property
+    def temperature(self) -> float:
+        return self.result[0].value / 10
+
+    @computed_field
+    @property
+    def humidity(self) -> float:
+        return self.result[1].value / 10
+
+    @computed_field
+    @property
+    def battery_status(self) -> int:
+        return self.result[2].value
 
 
 c = tinytuya.Cloud(
@@ -60,13 +63,14 @@ def get_temp():
     response = c.getstatus(os.getenv("TEMP_ID")) or {}
     # print(response)
     try:
-        result = ResponseModel(**response)
+        # result = ResponseModel(**response)
+        request_result = MainModel(**response)
     except pydantic.error_wrappers.ValidationError:
         raise APITuyaException
     return SensorData(
-        temperature=result.data["temp_current"] / 10,
-        humidity=result.data["humidity_value"] / 10,
-        battery=result.data["battery_percentage"],
+        temperature=request_result.temperature,
+        humidity=request_result.humidity,
+        battery=request_result.battery_status,
     )
 
 
